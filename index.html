@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MazeViz - Maze Visualization and Solving</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/maze.css">
+</head>
+<body>
+    <header>
+        <h1>MazeViz</h1>
+        <div class="theme-toggle">
+            <label for="theme-switch">Dark Mode</label>
+            <input type="checkbox" id="theme-switch">
+        </div>
+    </header>
+
+    <main>
+        <div class="controls-container">
+            <div class="maze-controls">
+                <h2>Maze Options</h2>
+                <div class="control-group">
+                    <label for="maze-size">Maze Size:</label>
+                    <select id="maze-size">
+                        <option value="10">10x10</option>
+                        <option value="15">15x15</option>
+                        <option value="20" selected>20x20</option>
+                        <option value="30">30x30</option>
+                        <option value="40">40x40</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <button id="generate-maze">Generate Random Maze</button>
+                    <select id="generation-algorithm">
+                        <option value="prim">Prim's Algorithm</option>
+                        <option value="kruskal">Kruskal's Algorithm</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <button id="clear-maze">Clear Maze</button>
+                    <button id="reset-maze">Reset Path</button>
+                </div>
+                <div class="drawing-tools">
+                    <h3>Drawing Tools</h3>
+                    <div class="tool-buttons">
+                        <button id="draw-wall" class="tool-btn active">Wall</button>
+                        <button id="draw-start" class="tool-btn">Start</button>
+                        <button id="draw-end" class="tool-btn">End</button>
+                        <button id="erase" class="tool-btn">Erase</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="algorithm-controls">
+                <h2>Solving Algorithm</h2>
+                <div class="control-group">
+                    <select id="algorithm-select">
+                        <option value="dfs">Depth-First Search</option>
+                        <option value="bfs">Breadth-First Search</option>
+                        <option value="astar">A* Algorithm</option>
+                        <option value="dijkstra">Dijkstra's Algorithm</option>
+                        <option value="wall-follower">Wall Follower</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <button id="solve-maze">Solve Maze</button>
+                </div>
+                <div class="control-group">
+                    <label for="animation-speed">Animation Speed:</label>
+                    <input type="range" id="animation-speed" min="1" max="100" value="50">
+                </div>
+            </div>
+
+            <div class="import-export">
+                <h2>Import/Export</h2>
+                <div class="control-group">
+                    <button id="export-maze">Export Maze</button>
+                    <button id="import-maze">Import Maze</button>
+                    <input type="file" id="import-file" accept=".json" style="display: none;">
+                </div>
+            </div>
+        </div>
+
+        <div class="maze-container">
+            <canvas id="maze-canvas"></canvas>
+            <div id="algorithm-info" class="info-panel">
+                <h3>Algorithm Information</h3>
+                <div id="algorithm-description"></div>
+                <div id="stats">
+                    <p>Cells visited: <span id="cells-visited">0</span></p>
+                    <p>Path length: <span id="path-length">0</span></p>
+                    <p>Time taken: <span id="time-taken">0</span> ms</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>MazeViz - A Maze Visualization and Solving Tool</p>
+    </footer>
+
+    <!-- Main Scripts -->
+    <script src="scripts/main.js"></script>
+    <script src="scripts/maze.js"></script>
+    
+    <!-- Algorithm Scripts -->
+    <script src="algorithms/depth-first.js"></script>
+    <script src="algorithms/breadth-first.js"></script>
+    <script src="algorithms/a-star.js"></script>
+    <script src="algorithms/dijkstra.js"></script>
+    <script src="algorithms/wall-follower.js"></script>
+    <script src="algorithms/prim.js"></script>
+    <script src="algorithms/kruskal.js"></script>
+</body>
+</html>
