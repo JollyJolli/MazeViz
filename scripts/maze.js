@@ -1,325 +1,399 @@
-// Maze class for MazeViz
+/**
+ * maze.js - Clase para manejar la estructura y renderizado del laberinto
+ */
 
 class Maze {
-    constructor(canvas, rows, cols) {
+    /**
+     * Constructor para la clase Maze
+     * @param {HTMLCanvasElement} canvas - El elemento canvas donde se dibujará el laberinto
+     * @param {number} size - El tamaño del laberinto (número de celdas por lado)
+     */
+    constructor(canvas, size) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
-        this.rows = rows;
-        this.cols = cols;
+        this.size = size;
         this.grid = [];
-        this.cellSize = 0;
         this.startCell = null;
         this.endCell = null;
-        this.visitedCells = [];
-        this.path = [];
-        
-        // Resize the canvas based on the available space
-        this.resizeCanvas();
-        
-        // Handle window resize
-        window.addEventListener('resize', () => this.resizeCanvas());
+        this.cellSize = 0;
     }
     
-    // Initialize the maze grid
+    /**
+     * Inicializa el laberinto con celdas vacías
+     */
     initialize() {
         this.grid = [];
-        this.visitedCells = [];
-        this.path = [];
-        this.startCell = null;
-        this.endCell = null;
         
-        // Create the grid with empty cells
-        for (let row = 0; row < this.rows; row++) {
-            const rowArray = [];
-            for (let col = 0; col < this.cols; col++) {
-                rowArray.push({
+        // Crear la cuadrícula de celdas
+        for (let row = 0; row < this.size; row++) {
+            const rowCells = [];
+            for (let col = 0; col < this.size; col++) {
+                rowCells.push({
                     row,
                     col,
-                    type: 'empty',
-                    visited: false,
-                    inPath: false,
+                    isWall: false,
+                    isStart: false,
+                    isEnd: false,
+                    isVisited: false,
+                    isFrontier: false,
+                    isPath: false,
                     distance: Infinity,
-                    fScore: Infinity,
-                    gScore: Infinity,
                     parent: null
                 });
             }
-            this.grid.push(rowArray);
+            this.grid.push(rowCells);
         }
+        
+        // Establecer celdas de inicio y fin por defecto
+        this.startCell = this.grid[1][1];
+        this.endCell = this.grid[this.size - 2][this.size - 2];
+        this.startCell.isStart = true;
+        this.endCell.isEnd = true;
+        
+        // Calcular el tamaño de cada celda
+        this.calculateCellSize();
     }
     
-    // Resize the canvas to fit the container
-    resizeCanvas() {
-        const container = this.canvas.parentElement;
-        const containerWidth = container.clientWidth;
-        const containerHeight = window.innerHeight * 0.6; // Use 60% of viewport height as max
-        
-        // Calculate the cell size based on the container dimensions and grid size
-        const cellSizeByWidth = Math.floor((containerWidth - 40) / this.cols);
-        const cellSizeByHeight = Math.floor((containerHeight - 40) / this.rows);
-        this.cellSize = Math.min(cellSizeByWidth, cellSizeByHeight);
-        
-        // Set canvas dimensions
-        this.canvas.width = this.cellSize * this.cols;
-        this.canvas.height = this.cellSize * this.rows;
-        
-        // Redraw the maze if it exists
-        if (this.grid.length > 0) {
-            this.draw();
-        }
+    /**
+     * Calcula el tamaño de cada celda basado en el tamaño del canvas
+     */
+    calculateCellSize() {
+        const minDimension = Math.min(this.canvas.width, this.canvas.height);
+        this.cellSize = Math.floor(minDimension / this.size);
     }
     
-    // Draw the maze on the canvas
+    /**
+     * Dibuja el laberinto completo en el canvas
+     */
     draw() {
-        // Clear the canvas
+        // Limpiar el canvas
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         
-        // Draw each cell
-        for (let row = 0; row < this.rows; row++) {
-            for (let col = 0; col < this.cols; col++) {
+        // Calcular el desplazamiento para centrar el laberinto
+        const offsetX = (this.canvas.width - this.size * this.cellSize) / 2;
+        const offsetY = (this.canvas.height - this.size * this.cellSize) / 2;
+        
+        // Dibujar cada celda
+        for (let row = 0; row < this.size; row++) {
+            for (let col = 0; col < this.size; col++) {
                 const cell = this.grid[row][col];
-                this.drawCell(cell);
+                const x = offsetX + col * this.cellSize;
+                const y = offsetY + row * this.cellSize;
+                
+                // Establecer el color de la celda según su estado
+                if (cell.isWall) {
+                    this.ctx.fillStyle = '#333333';
+                } else if (cell.isStart) {
+                    this.ctx.fillStyle = '#4caf50';
+                } else if (cell.isEnd) {
+                    this.ctx.fillStyle = '#f44336';
+                } else if (cell.isPath) {
+                    this.ctx.fillStyle = '#ffeb3b';
+                } else if (cell.isVisited) {
+                    this.ctx.fillStyle = '#bbdefb';
+                } else if (cell.isFrontier) {
+                    this.ctx.fillStyle = '#90caf9';
+                } else {
+                    this.ctx.fillStyle = '#ffffff';
+                }
+                
+                // Dibujar la celda
+                this.ctx.fillRect(x, y, this.cellSize, this.cellSize);
+                
+                // Dibujar el borde de la celda
+                this.ctx.strokeStyle = '#dddddd';
+                this.ctx.strokeRect(x, y, this.cellSize, this.cellSize);
             }
         }
     }
     
-    // Draw a single cell
-    drawCell(cell) {
-        const { row, col, type, visited, inPath } = cell;
-        const x = col * this.cellSize;
-        const y = row * this.cellSize;
-        
-        // Set the fill color based on cell properties
-        if (inPath) {
-            this.ctx.fillStyle = '#ffc107'; // Path color (amber)
-        } else if (visited) {
-            this.ctx.fillStyle = 'rgba(100, 149, 237, 0.3)'; // Visited color (light cornflower blue)
-        } else if (type === 'wall') {
-            this.ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-color');
-        } else if (type === 'start') {
-            this.ctx.fillStyle = '#4caf50'; // Start color (green)
-        } else if (type === 'end') {
-            this.ctx.fillStyle = '#f44336'; // End color (red)
-        } else {
-            this.ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--panel-background');
-        }
-        
-        // Draw the cell
-        this.ctx.fillRect(x, y, this.cellSize, this.cellSize);
-        
-        // Draw the cell border
-        this.ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--border-color');
-        this.ctx.strokeRect(x, y, this.cellSize, this.cellSize);
-    }
-    
-    // Get the cell at the specified coordinates
+    /**
+     * Obtiene una celda a partir de coordenadas del canvas
+     * @param {number} x - Coordenada X en el canvas
+     * @param {number} y - Coordenada Y en el canvas
+     * @returns {Object|null} - La celda en esa posición o null si está fuera del laberinto
+     */
     getCellFromCoordinates(x, y) {
-        const col = Math.floor(x / this.cellSize);
-        const row = Math.floor(y / this.cellSize);
+        // Calcular el desplazamiento para centrar el laberinto
+        const offsetX = (this.canvas.width - this.size * this.cellSize) / 2;
+        const offsetY = (this.canvas.height - this.size * this.cellSize) / 2;
         
-        if (row >= 0 && row < this.rows && col >= 0 && col < this.cols) {
+        // Calcular la fila y columna
+        const col = Math.floor((x - offsetX) / this.cellSize);
+        const row = Math.floor((y - offsetY) / this.cellSize);
+        
+        // Verificar si está dentro de los límites
+        if (row >= 0 && row < this.size && col >= 0 && col < this.size) {
             return this.grid[row][col];
         }
         
         return null;
     }
     
-    // Set the cell type
-    setCellType(row, col, type) {
-        if (row >= 0 && row < this.rows && col >= 0 && col < this.cols) {
-            // If setting a start or end point, clear the previous one
-            if (type === 'start') {
-                if (this.startCell) {
-                    this.grid[this.startCell.row][this.startCell.col].type = 'empty';
-                }
-                this.startCell = { row, col };
-            } else if (type === 'end') {
-                if (this.endCell) {
-                    this.grid[this.endCell.row][this.endCell.col].type = 'empty';
-                }
-                this.endCell = { row, col };
-            }
-            
-            // Update the cell type
-            this.grid[row][col].type = type;
-            
-            // If the cell was a start or end point and is now something else, update the reference
-            if (this.startCell && this.startCell.row === row && this.startCell.col === col && type !== 'start') {
-                this.startCell = null;
-            }
-            if (this.endCell && this.endCell.row === row && this.endCell.col === col && type !== 'end') {
-                this.endCell = null;
+    /**
+     * Establece o quita una pared en una celda
+     * @param {number} row - Fila de la celda
+     * @param {number} col - Columna de la celda
+     * @param {boolean} isWall - Si debe ser pared (true) o no (false)
+     */
+    setWall(row, col, isWall) {
+        const cell = this.grid[row][col];
+        
+        // No permitir establecer paredes en celdas de inicio o fin
+        if (cell.isStart || cell.isEnd) return;
+        
+        cell.isWall = isWall;
+    }
+    
+    /**
+     * Establece la celda de inicio
+     * @param {number} row - Fila de la celda
+     * @param {number} col - Columna de la celda
+     */
+    setStart(row, col) {
+        // Quitar el estado de inicio de la celda anterior
+        if (this.startCell) {
+            this.startCell.isStart = false;
+        }
+        
+        const cell = this.grid[row][col];
+        
+        // No permitir establecer inicio en una pared o en la meta
+        if (cell.isWall || cell.isEnd) return;
+        
+        cell.isStart = true;
+        this.startCell = cell;
+    }
+    
+    /**
+     * Establece la celda de fin
+     * @param {number} row - Fila de la celda
+     * @param {number} col - Columna de la celda
+     */
+    setEnd(row, col) {
+        // Quitar el estado de fin de la celda anterior
+        if (this.endCell) {
+            this.endCell.isEnd = false;
+        }
+        
+        const cell = this.grid[row][col];
+        
+        // No permitir establecer fin en una pared o en el inicio
+        if (cell.isWall || cell.isStart) return;
+        
+        cell.isEnd = true;
+        this.endCell = cell;
+    }
+    
+    /**
+     * Verifica si hay celdas de inicio y fin establecidas
+     * @returns {boolean} - true si ambas celdas están establecidas
+     */
+    hasStartAndEnd() {
+        return this.startCell && this.endCell;
+    }
+    
+    /**
+     * Marca una celda como visitada durante la resolución
+     * @param {number} row - Fila de la celda
+     * @param {number} col - Columna de la celda
+     */
+    markVisited(row, col) {
+        const cell = this.grid[row][col];
+        
+        // No marcar paredes, inicio o fin como visitadas
+        if (cell.isWall || cell.isStart || cell.isEnd) return;
+        
+        cell.isVisited = true;
+        cell.isFrontier = false;
+    }
+    
+    /**
+     * Marca una celda como frontera durante la resolución
+     * @param {number} row - Fila de la celda
+     * @param {number} col - Columna de la celda
+     */
+    markFrontier(row, col) {
+        const cell = this.grid[row][col];
+        
+        // No marcar paredes, inicio o fin como frontera
+        if (cell.isWall || cell.isStart || cell.isEnd) return;
+        
+        cell.isFrontier = true;
+    }
+    
+    /**
+     * Marca una celda como parte del camino solución
+     * @param {number} row - Fila de la celda
+     * @param {number} col - Columna de la celda
+     */
+    markPath(row, col) {
+        const cell = this.grid[row][col];
+        
+        // No marcar paredes, inicio o fin como parte del camino
+        if (cell.isWall || cell.isStart || cell.isEnd) return;
+        
+        cell.isPath = true;
+    }
+    
+    /**
+     * Reinicia las marcas de visitado, frontera y camino
+     */
+    resetVisited() {
+        for (let row = 0; row < this.size; row++) {
+            for (let col = 0; col < this.size; col++) {
+                const cell = this.grid[row][col];
+                cell.isVisited = false;
+                cell.isFrontier = false;
+                cell.isPath = false;
+                cell.distance = Infinity;
+                cell.parent = null;
             }
         }
     }
     
-    // Set the start point
-    setStart(row, col) {
-        this.setCellType(row, col, 'start');
-    }
-    
-    // Set the end point
-    setEnd(row, col) {
-        this.setCellType(row, col, 'end');
-    }
-    
-    // Check if the maze has both start and end points
-    hasStartAndEnd() {
-        return this.startCell !== null && this.endCell !== null;
-    }
-    
-    // Get the neighbors of a cell
-    getNeighbors(row, col) {
+    /**
+     * Obtiene las celdas vecinas de una celda dada
+     * @param {number} row - Fila de la celda
+     * @param {number} col - Columna de la celda
+     * @param {boolean} includeDiagonals - Si se deben incluir vecinos diagonales
+     * @returns {Array} - Array de celdas vecinas
+     */
+    getNeighbors(row, col, includeDiagonals = false) {
         const neighbors = [];
         const directions = [
-            { row: -1, col: 0 }, // Up
-            { row: 1, col: 0 },  // Down
-            { row: 0, col: -1 }, // Left
-            { row: 0, col: 1 }   // Right
+            [-1, 0],  // Arriba
+            [1, 0],   // Abajo
+            [0, -1],  // Izquierda
+            [0, 1]    // Derecha
         ];
         
-        for (const dir of directions) {
-            const newRow = row + dir.row;
-            const newCol = col + dir.col;
+        if (includeDiagonals) {
+            directions.push(
+                [-1, -1],  // Arriba-izquierda
+                [-1, 1],   // Arriba-derecha
+                [1, -1],   // Abajo-izquierda
+                [1, 1]     // Abajo-derecha
+            );
+        }
+        
+        for (const [dr, dc] of directions) {
+            const newRow = row + dr;
+            const newCol = col + dc;
             
-            if (newRow >= 0 && newRow < this.rows && newCol >= 0 && newCol < this.cols) {
-                const neighbor = this.grid[newRow][newCol];
-                if (neighbor.type !== 'wall') {
-                    neighbors.push(neighbor);
-                }
+            // Verificar si está dentro de los límites
+            if (newRow >= 0 && newRow < this.size && newCol >= 0 && newCol < this.size) {
+                neighbors.push(this.grid[newRow][newCol]);
             }
         }
         
         return neighbors;
     }
     
-    // Update the visited cells during algorithm animation
-    updateVisitedCells(visitedCells) {
-        // Reset all cells' visited status
-        for (let row = 0; row < this.rows; row++) {
-            for (let col = 0; col < this.cols; col++) {
-                this.grid[row][col].visited = false;
+    /**
+     * Verifica si existe un camino entre el inicio y el fin
+     * @returns {boolean} - true si existe un camino, false en caso contrario
+     */
+    hasValidPath() {
+        if (!this.startCell || !this.endCell) {
+            return false;
+        }
+        
+        // Usamos BFS para verificar la conectividad
+        const visited = Array(this.size).fill().map(() => Array(this.size).fill(false));
+        const queue = [this.startCell];
+        visited[this.startCell.row][this.startCell.col] = true;
+        
+        while (queue.length > 0) {
+            const current = queue.shift();
+            
+            // Si llegamos al final, hay un camino
+            if (current === this.endCell) {
+                return true;
             }
-        }
-        
-        // Mark the specified cells as visited
-        for (const cell of visitedCells) {
-            this.grid[cell.row][cell.col].visited = true;
-        }
-        
-        this.visitedCells = visitedCells;
-    }
-    
-    // Update the path during algorithm animation
-    updatePath(path) {
-        // Reset all cells' path status
-        for (let row = 0; row < this.rows; row++) {
-            for (let col = 0; col < this.cols; col++) {
-                this.grid[row][col].inPath = false;
-            }
-        }
-        
-        // Mark the specified cells as part of the path
-        for (const cell of path) {
-            this.grid[cell.row][cell.col].inPath = true;
-        }
-        
-        this.path = path;
-    }
-    
-    // Reset the maze (clear all cells)
-    clear() {
-        for (let row = 0; row < this.rows; row++) {
-            for (let col = 0; col < this.cols; col++) {
-                this.grid[row][col].type = 'empty';
-                this.grid[row][col].visited = false;
-                this.grid[row][col].inPath = false;
-            }
-        }
-        
-        this.startCell = null;
-        this.endCell = null;
-        this.visitedCells = [];
-        this.path = [];
-    }
-    
-    // Reset the path (keep walls, start, and end points)
-    resetPath() {
-        for (let row = 0; row < this.rows; row++) {
-            for (let col = 0; col < this.cols; col++) {
-                this.grid[row][col].visited = false;
-                this.grid[row][col].inPath = false;
-                this.grid[row][col].distance = Infinity;
-                this.grid[row][col].fScore = Infinity;
-                this.grid[row][col].gScore = Infinity;
-                this.grid[row][col].parent = null;
-            }
-        }
-        
-        this.visitedCells = [];
-        this.path = [];
-    }
-    
-    // Reset the maze (keep only walls)
-    reset() {
-        for (let row = 0; row < this.rows; row++) {
-            for (let col = 0; col < this.cols; col++) {
-                if (this.grid[row][col].type !== 'wall') {
-                    this.grid[row][col].type = 'empty';
+            
+            // Explorar vecinos
+            const neighbors = this.getNeighbors(current.row, current.col);
+            for (const neighbor of neighbors) {
+                if (!neighbor.isWall && !visited[neighbor.row][neighbor.col]) {
+                    visited[neighbor.row][neighbor.col] = true;
+                    queue.push(neighbor);
                 }
-                this.grid[row][col].visited = false;
-                this.grid[row][col].inPath = false;
-                this.grid[row][col].distance = Infinity;
-                this.grid[row][col].fScore = Infinity;
-                this.grid[row][col].gScore = Infinity;
-                this.grid[row][col].parent = null;
             }
         }
         
-        this.startCell = null;
-        this.endCell = null;
-        this.visitedCells = [];
-        this.path = [];
+        // Si terminamos el BFS sin encontrar el final, no hay camino
+        return false;
     }
     
-    // Serialize the maze to JSON
-    serialize() {
-        const cells = [];
+    /**
+     * Exporta el estado actual del laberinto a un objeto
+     * @returns {Object} - Objeto con los datos del laberinto
+     */
+    export() {
+        const walls = [];
+        let start = null;
+        let end = null;
         
-        // Save only non-empty cells
-        for (let row = 0; row < this.rows; row++) {
-            for (let col = 0; col < this.cols; col++) {
+        // Recopilar datos de paredes, inicio y fin
+        for (let row = 0; row < this.size; row++) {
+            for (let col = 0; col < this.size; col++) {
                 const cell = this.grid[row][col];
-                if (cell.type !== 'empty') {
-                    cells.push({
-                        row: cell.row,
-                        col: cell.col,
-                        type: cell.type
-                    });
+                
+                if (cell.isWall) {
+                    walls.push([row, col]);
+                }
+                
+                if (cell.isStart) {
+                    start = [row, col];
+                }
+                
+                if (cell.isEnd) {
+                    end = [row, col];
                 }
             }
         }
         
         return {
-            rows: this.rows,
-            cols: this.cols,
-            cells: cells
+            size: this.size,
+            walls,
+            start,
+            end
         };
     }
     
-    // Deserialize the maze from JSON
-    deserialize(data) {
-        // Create a new grid with the specified dimensions
-        this.rows = data.rows;
-        this.cols = data.cols;
-        this.initialize();
-        
-        // Set the cell types
-        for (const cell of data.cells) {
-            this.setCellType(cell.row, cell.col, cell.type);
+    /**
+     * Importa un laberinto desde un objeto
+     * @param {Object} data - Objeto con los datos del laberinto
+     */
+    import(data) {
+        // Verificar que los datos son válidos
+        if (!data || !data.size || !Array.isArray(data.walls) || 
+            !Array.isArray(data.start) || !Array.isArray(data.end)) {
+            throw new Error('Formato de datos inválido');
         }
         
-        // Resize the canvas to fit the new grid
-        this.resizeCanvas();
+        // Reiniciar el laberinto
+        this.size = data.size;
+        this.initialize();
+        
+        // Establecer paredes
+        for (const [row, col] of data.walls) {
+            if (row >= 0 && row < this.size && col >= 0 && col < this.size) {
+                this.setWall(row, col, true);
+            }
+        }
+        
+        // Establecer inicio y fin
+        const [startRow, startCol] = data.start;
+        const [endRow, endCol] = data.end;
+        
+        if (startRow >= 0 && startRow < this.size && startCol >= 0 && startCol < this.size) {
+            this.setStart(startRow, startCol);
+        }
+        
+        if (endRow >= 0 && endRow < this.size && endCol >= 0 && endCol < this.size) {
+            this.setEnd(endRow, endCol);
+        }
     }
 }

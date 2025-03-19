@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MazeViz - Maze Visualization and Solving</title>
+    <title>MazeViz - Visualizador de Algoritmos de Laberintos</title>
     <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="styles/maze.css">
 </head>
@@ -11,7 +11,7 @@
     <header>
         <h1>MazeViz</h1>
         <div class="theme-toggle">
-            <label for="theme-switch">Dark Mode</label>
+            <label for="theme-switch">Modo Oscuro</label>
             <input type="checkbox" id="theme-switch">
         </div>
     </header>
@@ -19,98 +19,111 @@
     <main>
         <div class="controls-container">
             <div class="maze-controls">
-                <h2>Maze Options</h2>
+                <h2>Controles del Laberinto</h2>
                 <div class="control-group">
-                    <label for="maze-size">Maze Size:</label>
+                    <label for="maze-size">Tamaño del Laberinto:</label>
                     <select id="maze-size">
                         <option value="10">10x10</option>
-                        <option value="15">15x15</option>
-                        <option value="20" selected>20x20</option>
+                        <option value="15" selected>15x15</option>
+                        <option value="20">20x20</option>
                         <option value="30">30x30</option>
-                        <option value="40">40x40</option>
+                        <option value="50">50x50</option>
                     </select>
                 </div>
                 <div class="control-group">
-                    <button id="generate-maze">Generate Random Maze</button>
+                    <label for="generation-algorithm">Algoritmo de Generación:</label>
                     <select id="generation-algorithm">
-                        <option value="prim">Prim's Algorithm</option>
-                        <option value="kruskal">Kruskal's Algorithm</option>
+                        <option value="prim">Prim</option>
+                        <option value="kruskal">Kruskal</option>
+                        <option value="dfs">DFS</option>
+                        <option value="backtracking">Backtracking</option>
                     </select>
                 </div>
-                <div class="control-group">
-                    <button id="clear-maze">Clear Maze</button>
-                    <button id="reset-maze">Reset Path</button>
-                </div>
+                <button id="generate-maze">Generar Laberinto</button>
+                <button id="clear-maze">Limpiar Laberinto</button>
                 <div class="drawing-tools">
-                    <h3>Drawing Tools</h3>
-                    <div class="tool-buttons">
-                        <button id="draw-wall" class="tool-btn active">Wall</button>
-                        <button id="draw-start" class="tool-btn">Start</button>
-                        <button id="draw-end" class="tool-btn">End</button>
-                        <button id="erase" class="tool-btn">Erase</button>
+                    <h3>Herramientas de Dibujo</h3>
+                    <div class="tool-group">
+                        <button id="draw-wall" class="tool-btn active">Dibujar Pared</button>
+                        <button id="erase-wall" class="tool-btn">Borrar Pared</button>
+                        <button id="set-start" class="tool-btn">Establecer Inicio</button>
+                        <button id="set-end" class="tool-btn">Establecer Meta</button>
                     </div>
                 </div>
             </div>
 
-            <div class="algorithm-controls">
-                <h2>Solving Algorithm</h2>
+            <div class="solving-controls">
+                <h2>Algoritmos de Resolución</h2>
                 <div class="control-group">
-                    <select id="algorithm-select">
-                        <option value="dfs">Depth-First Search</option>
-                        <option value="bfs">Breadth-First Search</option>
-                        <option value="astar">A* Algorithm</option>
-                        <option value="dijkstra">Dijkstra's Algorithm</option>
+                    <label for="solving-algorithm">Algoritmo:</label>
+                    <select id="solving-algorithm">
+                        <option value="dfs">Depth-First Search (DFS)</option>
+                        <option value="bfs">Breadth-First Search (BFS)</option>
+                        <option value="astar">A* Search</option>
+                        <option value="dijkstra">Dijkstra</option>
                         <option value="wall-follower">Wall Follower</option>
                     </select>
                 </div>
                 <div class="control-group">
-                    <button id="solve-maze">Solve Maze</button>
-                </div>
-                <div class="control-group">
-                    <label for="animation-speed">Animation Speed:</label>
+                    <label for="animation-speed">Velocidad de Animación:</label>
                     <input type="range" id="animation-speed" min="1" max="100" value="50">
                 </div>
+                <button id="solve-maze">Resolver Laberinto</button>
+                <button id="stop-solving">Detener</button>
             </div>
 
             <div class="import-export">
-                <h2>Import/Export</h2>
-                <div class="control-group">
-                    <button id="export-maze">Export Maze</button>
-                    <button id="import-maze">Import Maze</button>
-                    <input type="file" id="import-file" accept=".json" style="display: none;">
+                <h2>Importar/Exportar</h2>
+                <button id="export-maze">Exportar Laberinto</button>
+                <div class="import-container">
+                    <input type="file" id="import-file" accept=".json">
+                    <button id="import-maze">Importar Laberinto</button>
                 </div>
             </div>
         </div>
 
-        <div class="maze-container">
-            <canvas id="maze-canvas"></canvas>
-            <div id="algorithm-info" class="info-panel">
-                <h3>Algorithm Information</h3>
-                <div id="algorithm-description"></div>
-                <div id="stats">
-                    <p>Cells visited: <span id="cells-visited">0</span></p>
-                    <p>Path length: <span id="path-length">0</span></p>
-                    <p>Time taken: <span id="time-taken">0</span> ms</p>
+        <div class="visualization-container">
+            <div class="stats-panel">
+                <div class="stat">
+                    <span>Nodos Visitados:</span>
+                    <span id="visited-nodes">0</span>
                 </div>
+                <div class="stat">
+                    <span>Longitud del Camino:</span>
+                    <span id="path-length">0</span>
+                </div>
+                <div class="stat">
+                    <span>Tiempo:</span>
+                    <span id="solving-time">0 ms</span>
+                </div>
+            </div>
+            <div class="maze-container">
+                <canvas id="maze-canvas"></canvas>
             </div>
         </div>
     </main>
 
     <footer>
-        <p>MazeViz - A Maze Visualization and Solving Tool</p>
+        <p>MazeViz - Visualizador de Algoritmos de Laberintos</p>
     </footer>
 
-    <!-- Main Scripts -->
+    <!-- Scripts principales -->
+    <script src="scripts/sound-data.js"></script>
+    <script src="scripts/sound.js"></script>
     <script src="scripts/main.js"></script>
     <script src="scripts/maze.js"></script>
     
-    <!-- Algorithm Scripts -->
-    <script src="algorithms/depth-first.js"></script>
-    <script src="algorithms/breadth-first.js"></script>
-    <script src="algorithms/a-star.js"></script>
-    <script src="algorithms/dijkstra.js"></script>
-    <script src="algorithms/wall-follower.js"></script>
-    <script src="algorithms/prim.js"></script>
-    <script src="algorithms/kruskal.js"></script>
+    <!-- Algoritmos de generación -->
+    <script src="algorithms/generation/prim.js"></script>
+    <script src="algorithms/generation/kruskal.js"></script>
+    <script src="algorithms/generation/dfs-generation.js"></script>
+    <script src="algorithms/generation/backtracking.js"></script>
+    
+    <!-- Algoritmos de resolución -->
+    <script src="algorithms/solving/depth-first.js"></script>
+    <script src="algorithms/solving/breadth-first.js"></script>
+    <script src="algorithms/solving/a-star.js"></script>
+    <script src="algorithms/solving/dijkstra.js"></script>
+    <script src="algorithms/solving/wall-follower.js"></script>
 </body>
 </html>

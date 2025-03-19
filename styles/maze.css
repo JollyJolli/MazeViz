@@ -1,57 +1,63 @@
-/* Maze-specific styles */
+/* maze.css - Estilos específicos para el laberinto */
 
-#maze-canvas {
-    background-color: var(--panel-background);
+.maze-container {
+    position: relative;
+    width: 100%;
+    height: 600px;
+    background-color: var(--panel-color);
     border-radius: 8px;
     box-shadow: 0 2px 10px var(--shadow-color);
     border: 1px solid var(--border-color);
-    max-width: 100%;
-    height: auto;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#maze-canvas {
     display: block;
-    margin: 0 auto;
-    cursor: crosshair;
+    max-width: 100%;
+    max-height: 100%;
+    background-color: white;
 }
 
-/* Cell styles for the maze */
-.cell {
-    stroke: var(--border-color);
-    stroke-width: 1px;
-    fill: var(--panel-background);
+/* Estilos para los estados de las celdas */
+.cell-wall {
+    fill: #333333;
 }
 
-.wall {
-    fill: var(--text-color);
+.cell-path {
+    fill: #ffffff;
 }
 
-.start {
-    fill: #4caf50; /* Green */
+.cell-start {
+    fill: #4caf50;
 }
 
-.end {
-    fill: #f44336; /* Red */
+.cell-end {
+    fill: #f44336;
 }
 
-.visited {
-    fill: rgba(100, 149, 237, 0.3); /* Light cornflower blue */
+.cell-visited {
+    fill: #bbdefb;
 }
 
-.path {
-    fill: #ffc107; /* Amber */
+.cell-frontier {
+    fill: #90caf9;
 }
 
-.current {
-    fill: #2196f3; /* Blue */
+.cell-path-solution {
+    fill: #ffeb3b;
 }
 
-/* Animation for the current cell being processed */
-@keyframes pulse {
+/* Animaciones */
+@keyframes visitedAnimation {
     0% {
-        transform: scale(1);
-        opacity: 1;
+        transform: scale(0.3);
+        opacity: 0.3;
     }
     50% {
-        transform: scale(1.1);
-        opacity: 0.8;
+        opacity: 0.6;
     }
     100% {
         transform: scale(1);
@@ -59,44 +65,93 @@
     }
 }
 
-.current {
-    animation: pulse 1s infinite;
+@keyframes frontierAnimation {
+    0% {
+        transform: scale(0.6);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+    }
 }
 
-/* Tooltip styles for hover information */
-.tooltip {
+@keyframes pathAnimation {
+    0% {
+        transform: scale(0.6);
+        opacity: 0.6;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.animate-visited {
+    animation: visitedAnimation 0.3s ease-out forwards;
+}
+
+.animate-frontier {
+    animation: frontierAnimation 0.3s ease-out forwards;
+}
+
+.animate-path {
+    animation: pathAnimation 0.5s ease-out forwards;
+}
+
+/* Tooltip para información de celdas */
+.cell-tooltip {
     position: absolute;
-    background-color: var(--panel-background);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
     padding: 5px 10px;
-    font-size: 0.8rem;
+    border-radius: 4px;
+    font-size: 12px;
     pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.3s;
     z-index: 100;
-    box-shadow: 0 2px 5px var(--shadow-color);
+    display: none;
 }
 
-.tooltip.visible {
-    opacity: 1;
-}
-
-/* Loading indicator for algorithm processing */
-.loading {
+/* Indicadores de estado de resolución */
+.solving-indicator {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 50px;
-    height: 50px;
-    border: 5px solid var(--border-color);
-    border-top: 5px solid var(--primary-color);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
+    top: 10px;
+    right: 10px;
+    background-color: var(--accent-color);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: bold;
+    display: none;
 }
 
-@keyframes spin {
-    0% { transform: translate(-50%, -50%) rotate(0deg); }
-    100% { transform: translate(-50%, -50%) rotate(360deg); }
+.solving-indicator.active {
+    display: block;
+}
+
+/* Estilos para el modo oscuro */
+.dark-theme #maze-canvas {
+    background-color: #121212;
+}
+
+.dark-theme .cell-wall {
+    fill: #000000;
+}
+
+.dark-theme .cell-path {
+    fill: #2a2a2a;
+}
+
+.dark-theme .cell-visited {
+    fill: #3949ab;
+}
+
+.dark-theme .cell-frontier {
+    fill: #5c6bc0;
+}
+
+.dark-theme .cell-path-solution {
+    fill: #ffd600;
 }
